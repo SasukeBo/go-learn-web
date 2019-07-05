@@ -56,5 +56,5 @@ func init() {
 	orm.RegisterModel(new(UserInfo), new(User), new(Profile), new(Post), new(Tag))
 
 	// 创建 table
-	orm.RunSyncdb("default", false, true)
+	// orm.RunSyncdb("default", false, true)
 }
