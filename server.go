@@ -7,6 +7,7 @@ import (
 	"fmt"
 	_ "github.com/SasukeBo/learn-web/db"
 	"github.com/astaxie/beego/session"
+	"golang.org/x/net/websocket"
 	"html/template"
 	"io"
 	"log"
@@ -15,6 +16,20 @@ import (
 	"strconv"
 	"time"
 )
+
+func report(ws *websocket.Conn) {
+	for {
+		var receive string
+
+		if err := websocket.Message.Receive(ws, &receive); err != nil {
+			fmt.Println("error:", err)
+			break
+		}
+
+		fmt.Println(receive)
+		websocket.Message.Send(ws, "server received")
+	}
+}
 
 func getUserSlice(w http.ResponseWriter, _ *http.Request) {
 	f1 := Friend{Fname: "liziqi"}
@@ -86,6 +101,14 @@ func gethelloName(w http.ResponseWriter, r *http.Request) {
 	for _, cookie := range r.Cookies() {
 		fmt.Fprint(w, cookie.Name+": "+cookie.Value+"\n")
 	}
+}
+
+func xss(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+	name := r.Form.Get("name")
+	fmt.Println("name", name)
+	w.Header().Add("X-XSS-Protection", "0")
+	fmt.Fprintf(w, name)
 }
 
 func login(w http.ResponseWriter, r *http.Request) {
@@ -180,6 +203,7 @@ func main() {
 	// logic.TestDB()
 
 	http.HandleFunc("/", sayhelloName)
+	http.HandleFunc("/xss", xss)
 	http.HandleFunc("/count", count)
 	http.HandleFunc("/gethello", gethelloName)
 	http.HandleFunc("/login", login)
@@ -188,6 +212,7 @@ func main() {
 	http.HandleFunc("/json", requestJSON)
 	http.HandleFunc("/template", getTemplate)
 	http.HandleFunc("/userslice", getUserSlice)
+	http.Handle("/websocket", websocket.Handler(report))
 
 	fmt.Println("OK! Server start listening on", port)
 
